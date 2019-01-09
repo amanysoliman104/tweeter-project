@@ -1,0 +1,315 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>{%block title%} tweetme.co {%endblock title%}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Bootstrap -->
+    <link href="{% static 'css/bootstrap.min.css'%}" rel="stylesheet">
+    <!--<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css"> -->
+
+  <style >
+    .red-color{
+      color:red;
+    }
+    .grey-color{
+      color: #ccc;
+    }
+  </style>
+    
+  </head>
+  <body>
+    {% include "navbar.html " %}
+    <div class = 'container'>
+      
+      {% block content %}
+      {% endblock content %}
+      
+    </div>
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://code.jquery.com/jquery.js"></script>
+    <script>
+      // translate the name that i search on it to url
+      function getParameterByName(name,url)
+{
+    if(!url){
+        url=window.location.href;
+    }
+    name=name.replace(/[\[\]]/g,"\\$&");
+    var regex=new RegExp("[?&]"+name+"(=([^&#]*)|&|#|$)"),
+    results=regex.exec(url);
+    if(!results) return null;
+    if(!results[2]) return ''; 
+    return decodeURIComponent(results[2].replace(/\+/g," "));   
+
+}
+function loadTweetContainer(tweetContainerID){
+    // console.log("working"); 
+    var query=getParameterByName('q');
+    var tweetList=[]
+    var nextTweetUrl;
+    var tweetContainer;
+    if(tweetContainer){
+      tweetContainer = $("#",tweetContainerID)
+    }else{
+      tweetContainer = $("#tweet-container")
+    }
+    
+    var initialUrl=tweetContainer.attr("data-url")||"/api/tweet/"
+    console.log(initialUrl)
+    
+    
+    //***************************************************************************
+    //to get a spacific hashtage
+    function updateHashLinks(){
+        $(".media-body").each(function(data){
+            var hashtagRegex=/(^|\s)#([\w\d-]+)/g
+            var usernameRegex=/(^|\s)@([\w\d-]+)/g
+            var currentHtml=$(this).html()
+            var newText;
+            newText=currentHtml.replace(hashtagRegex ,"$1<a href='/tags/$2'>#$2</a>") //$1 for any think with hash befor the hashtag
+            newText=newText.replace(usernameRegex ,"$1<a href='/$2/'>@$2</a>") 
+            $(this).html(newText)
+
+        })
+
+    }
+    //***************************************************************************
+    //on() method attaches one or more event handlers for the selected elements  
+    $(document.body).on("click",".retweetBtn",function(e){
+        e.preventDefault() // method stops the default action of an element from happening,
+        //as Prevent a submit button from submitting a form 
+        //or Prevent a link from following the URL
+
+        var url="/api"+ $(this).attr("href") //attr(attribute )set this attr to the selector
+        console.log("clicked")
+        $.ajax({
+            method:"GET",
+            url:url,
+            success:function(data){
+                console.log(data)
+                //if username in api url ,lets ignore
+                if(initialUrl=="/api/tweet/"){
+                    attachTweet(data,true,true)
+                    updateHashLinks()  
+                }
+                
+            },
+            error:function(data){
+                console.log("error")
+                console.log(data)
+            }
+
+        })
+    })
+
+    //***************************************************************************
+    //to solve tweet problem that was ,
+    //when i press on tweet after create post it can not add it to the list
+    //catch tweet from pasetweet fun and display it  
+    function attachTweet(tweetValue,prepend,retweet){
+        
+        var tweetContent=tweetValue.content;
+        var tweetUser=tweetValue.user;
+        var tweetFormattedHtml;
+        var dateDisplay=tweetValue.date_display
+        if(retweet&& tweetValue.parent){
+            //retweet
+            var mainTweet=tweetValue.parent
+            tweetFormattedHtml="<div class=\"media\"><div class=\"media-body\"><span class='grey-color'>Retweet via "+tweetUser.username+" on "+dateDisplay +
+                "</span><br/>"+mainTweet.content+ "<br/> via <a href='"+mainTweet.user.url+ "'>" +mainTweet.user.username+"</a> |" +mainTweet.date_display+"|"+" <a href='/tweet/"+ mainTweet.id+"'>View</a> |"+" <a class='retweetBtn' href='/tweet/"+ mainTweet.id+"/retweet/'>Retweet</a>"+"</div></div>"
+
+        }else{
+            //fresh tweet
+            tweetFormattedHtml="<div class=\"media\"><div class=\"media-body\">"+tweetContent+ "<br/> via <a href='"+tweetUser.url+ "'>" +tweetUser.username+"</a> |" +dateDisplay+"|"+" <a href='/tweet/"+ tweetValue.id+"'>View</a> |"+ " <a class='retweetBtn' href='/tweet/"+ tweetValue.id+"/retweet/'>Retweet</a>"+"</div></div>"
+        }
+        
+        if(prepend==true){
+            tweetContainer.prepend(tweetFormattedHtml)   
+
+        }
+        else{
+            tweetContainer.append(tweetFormattedHtml)
+        }
+
+    }
+  
+  //**********************************************************************
+  //catch tweet and pass it to display
+   function parseTweets(){
+       if(tweetList==0){
+            $("#tweet-container").text("No tweet currently found .");
+       }
+       else{
+        //tweets exist , parse them
+        $.each(tweetList,function(key,value){
+            var tweetKey=key;
+            if(value.parent){
+             attachTweet(value,false,true)    
+            }else{
+              attachTweet(value)  
+            }
+             
+            
+        })
+        }
+
+   }
+   //**************************************************************************
+   //give me tweets
+   function fetchTweets(url){
+    console.log("fetch")
+    var fetchurl;
+    if(!url){ // if i do not send url in fun
+        fetchurl=initialUrl
+    }else{
+        fetchurl=url
+    }
+
+    $.ajax({
+    url:fetchurl,
+    data:{"q":query},
+    method:"GET",
+
+    success:function(data){
+        console.log(data)
+        tweetList=data.results //results var in apitweet page 
+        //if stat to hide the button if there is no next page
+        if(data.next){
+           nextTweetUrl=data.next //next var in apitweet page 
+        }else{
+          $("#loadmore").css("display","none") //hide the button  
+        }
+        parseTweets()
+        updateHashLinks()
+
+    },
+    error:function(data){
+        console.log("error  ")
+        console.log(data)
+
+    }
+
+   })
+
+   }
+   //**************************************************************************
+
+    fetchTweets()
+    $("#loadmore").bind("click",function(event){
+        event.preventDefault()
+        if(nextTweetUrl){
+            fetchTweets(nextTweetUrl)
+        }
+        //load more items
+    })
+    var charsStart=140;
+    var charsCurrent=0;
+    //to limited post char
+    $("#tweet_form").append("<span id='tweetCharsLeft'>" + charsStart + "</span>") 
+    // to monitoring the length of the text(post)   
+    $("#tweet_form  textarea").keyup(function(event){
+        var tweetValue=$(this).val() //val mean that the postchar it self
+        
+        //in to line , try to print the numbers that free to containe write the post with
+        //max 140 num
+        charsCurrent=charsStart-tweetValue.length
+        var spanChars=$("#tweetCharsLeft")
+        spanChars.text(charsCurrent)
+        //to prevent  charscurrent from the negative num 
+        if(charsCurrent>0){
+            //remove classes
+            spanChars.removeClass("grey-color") //this classes styeled under
+            spanChars.removeClass("red-color")
+
+        }else if(charsCurrent==0){
+            //add grey class
+            spanChars.removeClass("red-color")
+            spanChars.addClass("grey-color")
+
+        }else if(charsCurrent<0){
+            //add red class
+            spanChars.removeClass("grey-color")
+            spanChars.addClass("red-color")
+
+        }
+
+
+    })
+
+    $("#tweet_form").submit(function(event){
+    event.preventDefault()
+    var this_=$(this)//this call whatever object in tweet_form 
+    var formData=this_.serialize() //to turn data to jason format 
+    if(charsCurrent>=0){
+    $.ajax({
+    url:"/api/tweet/create/",
+    data:formData,
+    method:"POST",
+    success:function(data){
+        // i do this to solve the line under the post that i write it 
+        this_.find("input[type=text],textarea").val("")   //find("input[type=text],textarea" //...this things is aselector things inside the form 
+        console.log("success")
+        attachTweet(data,true)
+        updateHashLinks()
+       // console.log(data)
+        //fetchTweets()
+       
+    },
+    error:function(data){
+        console.log("error ttttt")
+        console.log(data)
+        console.log(data.statusText)
+        console.log(data.status)
+
+    }
+
+   });
+   }else {
+        console.log("cannot send , tweet very long ")
+   }
+    
+   })
+
+        
+}
+    </script>
+      {%block script%}{%endblock script%}
+    <script>
+      $(document).ready(function(){
+        // all this for autmated searching 
+        var typingTimer;
+        var doneInterval=800;//after this time the fun will search
+        var searchInput=$("#navbar-search-form input[type=text]")
+        var searchQuery;
+        
+        //after i type
+        searchInput.keyup(function(event){
+          searchQuery =$(this).val()
+          clearTimeout(typingTimer)
+          typingTimer=setTimeout(doneSearchTyping,doneInterval)
+          
+        })
+        //when i type
+        searchInput.keydown(function(event){
+          clearTimeout(typingTimer)//when i type in search it prevent doing 
+          //doneSearchTyping func
+        
+        })
+        function doneSearchTyping(){
+          if(searchQuery){
+            //do search
+            var url='/tweet/search/?q='+ searchQuery
+            document.location.href=url;
+          }
+        }
+
+      })
+        
+    </script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+   <!-- <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script> -->
+
+  </body>
+</html>

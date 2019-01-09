@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{%block script%}
+<script >
+$(document).ready(function(){
+    loadTweetContainer("tweet-container")
+});
+
+</script>
+{%endblock script%}
+
+
+
+{% block content %}
+<div class='row' >
+	<div class= 'col-sm-3 col-xs-12 '>
+        <h3>{{object.username }} </h3><br/>
+        <hr/>
+        <p>followers:{{object.followed_by.all.count}}</p><!--all here that i override it in userprofilemanger class-->
+        <p>
+          <!--following here from view context[following] -->
+          <a class='btn btn-link' href='{{ object.profile.get_follow_url }}'>  
+           {% if following %}Unfollow {% else %}Follow{% endif %}
+          </a>
+        </p>
+        
+      </hr>
+      <h1>following <small>{{object.profile.get_following.count}}</small></h1>
+      {% for user in object.profile.get_following %}
+      <a href='/{{user.username}}'>{{user.username}}</a><br/>
+      {%empty%}
+        <h4>Not following any users</h4>
+      {% endfor%}
+
+      </hr>
+      <h1>followed by</h1>
+      {% for profile in object.followed_by.all %}
+      <a href='/{{profile.user.username}}'>{{profile.user.username}}</a><br/>
+      
+      {%empty%}
+        <h4>Not followed by any users</h4>
+      {% endfor%}
+    </div>
+    <div class= 'col-sm-9 col-xs-12 ' >
+      <h1>tweets</h1>
+      <div id='tweet-container' data-url='/api/{{object.username}}/tweet/'>
+       </div>
+       <a href='#' id='loadmore'>load more tweet</a>
+      <!--object.tweet_set.all , it bydefault get all tweets 
+      {% for tweet in object.tweet_set.all %}
+      {{ tweet }}<br/>
+      {% endfor%}-->
+
+
+    </div>
+
+    
+
+</div>    
+{% endblock content %}

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+<style>
+#tweet-container {
+
+
+}
+</style>
+
+
+{%block script%}
+
+<script >
+  
+
+
+$(document).ready(function(){
+    loadTweetContainer("tweet-container")
+});
+
+
+
+</script>
+
+{%endblock script%}
+
+
+
+
+{% block content %}
+
+   
+<div class='row' >
+	
+    <div class= 'col-sm-9 '>
+        {% if  not request.GET.q %}
+            <div class='' >
+                {% include "tweets/form.html" with form=create_form action_url=create_url btn_title='tweet' form_id='tweet_form' %}
+            </div>
+            <hr/>
+            
+       {%endif%}
+       <div id='tweet-container' data-url='/api/tweet/'>
+       </div>
+       <a href='#' id='loadmore'>load more tweet</a>
+
+    </div>
+</div>    
+{% endblock content %}  
