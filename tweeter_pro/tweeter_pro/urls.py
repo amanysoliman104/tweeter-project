@@ -18,21 +18,29 @@ from django.contrib import admin
 from django.conf import settings
 from django.contrib.staticfiles import views
 from django.conf.urls.static import static
+from acounts.views import UserRegisterView
 from tweets.views import TweetListView
 from hashtags.views import HashTagView
-from .views import home
+from hashtags.api.views import TagTweetAPIView
+from tweets.api.views import SearchTweetAPIView
+from .views import home ,SearchView 
 # if i have alot of apps in my pro , i can make for every app ,
 # its view file and its templates folder to organize the pro 
 ##tweets here is the name of the app
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^$', TweetListView.as_view() , name ='home'), # when press home title apear list 
+    url(r'^search/$', SearchView.as_view() , name ='search'),
     url(r'^tags/(?P<hashtag>.*)/$', HashTagView.as_view() , name ='hashtag'),
     url(r'^tweet/', include('tweets.urls' , namespace='tweet')), 
-    url(r'^', include('acounts.urls' , namespace='profiles')),
-    url(r'^api/', include('acounts.api.urls' , namespace='profiles-api')),
+    url(r'^api/tags/(?P<hashtag>.*)/$', TagTweetAPIView.as_view() , name ='tag-tweet-api'),
+    url(r'^api/search/$', SearchTweetAPIView.as_view() , name ='search-api'),
     url(r'^api/tweet/', include('tweets.api.urls' , namespace='tweet-api')), 
-
+    url(r'^api/', include('acounts.api.urls' , namespace='profiles-api')),
+    url(r'^register/$', UserRegisterView.as_view() , name ='register'),
+    url(r'^', include('django.contrib.auth.urls')),
+    url(r'^', include('acounts.urls' , namespace='profiles')),
+    
 
 ]
 if settings.DEBUG:

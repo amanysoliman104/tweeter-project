@@ -25,6 +25,7 @@ class TweetManger(models.Manager):
             timestamp__year=timezone.now().year,
             timestamp__month=timezone.now().month,
             timestamp__day=timezone.now().day,
+            reply=False,
 
             )
         if qs.exists():
@@ -38,10 +39,23 @@ class TweetManger(models.Manager):
         obj.save()
         return obj
 
+
+    def like_toggle(self,user,tweet_obj):
+        if user in tweet_obj.liked.all():
+            is_liked=False
+            tweet_obj.liked.remove(user)
+        else:
+            is_liked=True
+            tweet_obj.liked.add(user)
+        return is_liked
+                 
+
 class Tweet(models.Model):
     parent    =models.ForeignKey("self",blank=True ,null=True)
     user      =models.ForeignKey(settings.AUTH_USER_MODEL)#this argument means that user cannot be null or delete it from form (intgrity error)
     content   =models.CharField(max_length = 140,validators=[validate_content])
+    liked     =models.ManyToManyField(settings.AUTH_USER_MODEL,blank=True,related_name='liked')
+    reply     =models.BooleanField(verbose_name='is a reply?',default=False)
     updated   =models.DateTimeField(auto_now=True)
     timestamp =models.DateTimeField(auto_now_add=True)
 
@@ -52,15 +66,24 @@ class Tweet(models.Model):
         return str(self.content)
      
 
-
     def get_absolute_url(self):
         return reverse_lazy("tweet:detail", kwargs={"pk":self.pk}) #when press confirm in create class call detail page ,istade of successurl in createclass
 
-    
+  
     class Meta:
         ordering=['-timestamp']# if i want to rarrange the tweets by timestamp and i do here in model to can use it in another app  
 
-
+    def get_parent(self):
+        the_parent=self
+        if self.parent:
+            the_parent=self.parent
+        return the_parent
+      
+    def get_children(self):
+        parent=self.get_parent()
+        qs=Tweet.objects.filter(parent=parent)
+        qs_parent=Tweet.objects.filter(pk=parent.pk)
+        return (qs | qs_parent)   
 
 
     '''def clean(self,*args ,**kwargs):

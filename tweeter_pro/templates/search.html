@@ -1,4 +1,3 @@
-
 {% extends "base.html" %}
 
 <style>
@@ -20,7 +19,7 @@ $(document).ready(function(){
    
 <div class='row' >
 	
-    
+    <div class= 'col-sm-9 '>
       <div class= 'col-sm-12 '>
         {% if request.GET.q %}
           <p class='lead'>Results for {{request.GET.q }}</p>
@@ -28,14 +27,23 @@ $(document).ready(function(){
         {%endif%}
 
       </div>
-      <div class= 'col-sm-8  col-sm-offset-2 '>
       <h2>Tweets</h2>
        <hr/>
-       <div id='tweet-container' data-url='/api/tags/{{ obj.tag}}/'>
+       <div id='tweet-container' data-url='/api/search/'>
        </div>
        <a href='#' id='loadmore'>load more tweet</a>
 
     </div>
-    
+    <div class= 'col-sm-3 '>
+      <h2>Users</h2>
+      <hr/>
+      {% for user in users %} <!-- users from context in searchview clas in public view -->
+        <a href='/{{user.username}}/'>{{user.username}}</a><br/>
+
+        {% empty %}
+        <p>No users found</p>
+      {%endfor%}
+
+    </div>
 </div>    
 {% endblock content %}  

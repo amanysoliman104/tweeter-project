@@ -50,15 +50,17 @@ class TweetDetailView(DetailView):
         print (self.kwargs)
         pk = self.kwargs.get("pk")
         return Tweet.objects.get(id=pk)'''
+    
 
-
-class TweetListView(ListView):
+class TweetListView(LoginRequiredMixin,ListView):
 
     def get_queryset(self,*args,**kwargs):
         qs=queryset=Tweet.objects.all()
         query = self.request.GET.get("q",None)
         if query is not None:
-            qs=qs.filter(Q(content__icontains=query)|Q(user__username__icontains=query)) # Q here to i can search with the username and the content ,but if i delete it i will search with content only
+            qs=qs.filter(
+            Q(content__icontains=query)
+            |Q(user__username__icontains=query)) # Q here to i can search with the username and the content ,but if i delete it i will search with content only
         return qs
 
 

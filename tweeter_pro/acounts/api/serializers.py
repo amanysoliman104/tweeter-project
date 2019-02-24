@@ -17,6 +17,7 @@ class UserDisplaySerializer(serializers.ModelSerializer):
 		    'last_name',
 		    'Follower_count',
 		    'url',
+		    
 
 		    #'email'
 		]

@@ -24,22 +24,25 @@ $(document).ready(function(){
           </a>
         </p>
         
-      </hr>
-      <h1>following <small>{{object.profile.get_following.count}}</small></h1>
+      <hr/>
+      <h3>following <small>{{object.profile.get_following.count}}</small></h3>
       {% for user in object.profile.get_following %}
       <a href='/{{user.username}}'>{{user.username}}</a><br/>
       {%empty%}
-        <h4>Not following any users</h4>
+        <h5>Not following any users</h5>
       {% endfor%}
 
       </hr>
-      <h1>followed by</h1>
+      <h3>followed by</h3>
       {% for profile in object.followed_by.all %}
       <a href='/{{profile.user.username}}'>{{profile.user.username}}</a><br/>
-      
       {%empty%}
-        <h4>Not followed by any users</h4>
+        <h5>Not followed by any users</h5>
       {% endfor%}
+
+      </hr>
+      
+     
     </div>
     <div class= 'col-sm-9 col-xs-12 ' >
       <h1>tweets</h1>
@@ -50,6 +53,7 @@ $(document).ready(function(){
       {% for tweet in object.tweet_set.all %}
       {{ tweet }}<br/>
       {% endfor%}-->
+
 
 
     </div>
